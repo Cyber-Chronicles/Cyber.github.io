@@ -1,4 +1,4 @@
-Terraform files used to create a prviate VPC, IGW, using SSM for a disposable Kali Ec2, with alerting setup through CloudWatch and SNS.
+Terraform files used with AWS to create a prviate VPC, IGW, using SSM with a disposable Kali Ec2, with alerting setup through CloudWatch and SNS.
 
 I will blog about it here on https://CyberChronicles.org soon.
 
