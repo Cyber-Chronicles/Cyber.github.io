@@ -2,6 +2,106 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
+resource "aws_iam_user" "terraform_kali_deployer" {
+  name = "terraform-kali-deployer"
+}
+
+resource "aws_iam_user_policy" "kali_deployment_policy" {
+  name = "terraform-kali-deployment-policy"
+  user = aws_iam_user.terraform_kali_deployer.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:TerminateInstances",
+          "ec2:CreateTags",
+          "ec2:CreateVpc",
+          "ec2:DeleteVpc",
+          "ec2:ModifyVpcAttribute",
+          "ec2:CreateSubnet",
+          "ec2:DeleteSubnet",
+          "ec2:CreateInternetGateway",
+          "ec2:AttachInternetGateway",
+          "ec2:CreateSecurityGroup",
+          "ec2:DeleteSecurityGroup",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:DetachInternetGateway",
+          "ec2:DeleteInternetGateway",
+          "ec2:CreateRouteTable",
+          "ec2:DeleteRouteTable",
+          "ec2:AssociateRouteTable",
+          "ec2:CreateRoute"
+        ]
+        Resource = "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:RunInstances"
+        ]
+        Resource = [
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*",
+          "arn:aws:ec2:${data.aws_region.current.name}::image/*",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:subnet/*",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:network-interface/*",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:security-group/*",
+          "arn:aws:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:volume/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeInternetGateways"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:CreateInstanceProfile",
+          "iam:DeleteInstanceProfile",
+          "iam:AddRoleToInstanceProfile",
+          "iam:RemoveRoleFromInstanceProfile"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:CreateLogGroup",
+          "cloudwatch:DeleteLogGroup",
+          "cloudwatch:PutRetentionPolicy"
+        ]
+        Resource = "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/ssm/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic",
+          "sns:DeleteTopic",
+          "sns:Subscribe",
+          "sns:Unsubscribe"
+        ]
+        Resource = "arn:aws:sns:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:kali-*"
+      }
+    ]
+  })
+}
+
 # Create VPC Network
 module "networking" {
   source = "./modules/vpc"
