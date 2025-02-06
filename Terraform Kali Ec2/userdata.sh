@@ -75,8 +75,10 @@ chmod +x /usr/local/bin/monitor_logins.sh
 (crontab -l 2>/dev/null; echo "*/5 * * * * /usr/local/bin/monitor_logins.sh") | crontab -
 
 # Setup tools
-wget https://raw.githubusercontent.com/Cyber-Chronicles/Cyber.github.io/refs/heads/main/Scripts/setup.sh
-chmod +x setup.sh
+wget https://raw.githubusercontent.com/Cyber-Chronicles/Cyber.github.io/refs/heads/main/Scripts/setup.sh -O /tmp/script.sh
+chmod +x /tmp/script.sh
+/tmp/script.sh
+touch /tmp/check.txt && echo "Install setup ran till the end" >> /tmp/check.txt
 
 # Final system update
 apt-get autoremove -y
