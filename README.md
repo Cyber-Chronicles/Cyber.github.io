@@ -1,4 +1,4 @@
-# **[Welcome!](https://cyber-chronicles.github.io/Cyber/)**
+# **[Welcome!](https://Cyber-Chronicles.github.io/Cyber/index.html)**
  
 
 This page will link to scripts or wrappers I have made and also files related to my blog [CyberChronicles.org](https://cyberchronicles.org).
