@@ -102,21 +102,6 @@ resource "aws_iam_user_policy" "kali_deployment_policy" {
   })
 }
 
-# Create VPC Network
-module "networking" {
-  source = "./modules/vpc"
-
-  vpc_config = {
-    cidr_block           = var.vpc_cidr
-    enable_dns_hostnames = true
-    enable_dns_support   = true
-    availability_zones   = var.availability_zones
-    tags = {
-      "Name" = "kali-pentesting-vpc"
-    }
-  }
-}
-
 # VPC Endpoints for SSM
 resource "aws_vpc_endpoint" "vpc_endpoints" {
   for_each            = toset(var.vpc_endpoints)
@@ -202,4 +187,69 @@ resource "aws_cloudwatch_log_metric_filter" "suspicious_commands" {
     namespace = "SecurityMetrics"
     value     = "1"
   }
+}
+
+# VPC Resource
+resource "aws_vpc" "kali_vpc" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "kali-pentesting-vpc"
+  }
+}
+
+# Internet Gateway
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.kali_vpc.id
+
+  tags = {
+    Name = "kali-vpc-igw"
+  }
+}
+
+# Public Subnets
+resource "aws_subnet" "public_subnets" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.kali_vpc.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index)
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name = "Public Subnet ${count.index + 1}"
+  }
+}
+
+# Private Subnets
+resource "aws_subnet" "private_subnets" {
+  count             = length(var.availability_zones)
+  vpc_id            = aws_vpc.kali_vpc.id
+  cidr_block        = cidrsubnet(var.vpc_cidr, 8, count.index + length(var.availability_zones))
+  availability_zone = var.availability_zones[count.index]
+
+  tags = {
+    Name = "Private Subnet ${count.index + 1}"
+  }
+}
+
+# Route Table for Public Subnets
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.kali_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name = "Public Route Table"
+  }
+}
+
+# Route Table Association for Public Subnets
+resource "aws_route_table_association" "public" {
+  count          = length(aws_subnet.public_subnets)
+  subnet_id      = aws_subnet.public_subnets[count.index].id
+  route_table_id = aws_route_table.public.id
 }
